@@ -1,0 +1,6 @@
+---
+# tasks file for base
+
+-
+  name: Include the initial server setup tasks for Bionic Beaver
+  import_tasks: focal.yml

@@ -1,0 +1,4 @@
+---
+# defaults file for base
+
+ssh_public_key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"

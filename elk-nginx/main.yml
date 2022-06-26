@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: true
+  become_method: sudo
+  roles:
+    - base
+    - geerlingguy.htpasswd
+    - elastic.elasticsearch
+    - nginx
+    - kibana
+    - metricbeat
+    - filebeat
