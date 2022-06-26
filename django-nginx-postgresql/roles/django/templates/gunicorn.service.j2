@@ -1,0 +1,25 @@
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+Type=notify
+# The specific user that our service will run as
+
+User={{ application_user }}
+Group=www-data
+RuntimeDirectory=gunicorn
+WorkingDirectory={{ git_repository_destination }}/app
+ExecStart={{ virtual_environment_location }}/bin/gunicorn \
+          --access-logfile - \
+          --workers 4 \
+          --bind unix:/run/gunicorn.sock \
+          --chdir {{ git_repository_destination }}/app app.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

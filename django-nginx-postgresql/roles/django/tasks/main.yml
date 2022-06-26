@@ -1,0 +1,10 @@
+---
+# tasks file for django
+
+-
+  name: Include tasks to create a Python virtual environment
+  import_tasks: virtual_environment.yml
+
+-
+  name: Include tasks to setup the Django application
+  import_tasks: django.yml

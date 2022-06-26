@@ -1,0 +1,97 @@
+---
+# Initial server setup with Ubuntu 18.04
+
+-
+  name: Install prerequisites
+  apt:
+    name: aptitude
+    update_cache: yes
+    state: present
+    force_apt_get: yes
+
+-
+  name: Setup sudo group
+  block:
+    -
+      name: Make sure we have a 'wheel' group
+      group:
+        name: wheel
+        state: present
+
+    -
+      name: Allow 'wheel' group to have passwordless sudo
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%wheel'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        validate: '/usr/sbin/visudo -cf %s'
+
+-
+  name: Setup new user and passwordless SSH login
+  block:
+    -
+      name: Create a new regular user with sudo privileges
+      user:
+        name: "{{ application_user }}"
+        state: present
+        groups: wheel
+        append: true
+        create_home: true
+        shell: /bin/bash
+      register: user_info
+
+    -
+      name: Make user information accessible across roles
+      set_fact:
+        user_information: "{{ user_info }}"
+        cacheable: yes
+
+    -
+      name: Set authorized key for remote user
+      authorized_key:
+        user: "{{ application_user }}"
+        state: present
+        key: "{{ ssh_public_key }}"
+
+-
+  name: Install packages
+  block:
+    -
+      name: Update repositories cache
+      apt:
+        update_cache: yes
+
+    -
+      name: Install required system packages
+      apt:
+        name: "{{ item }}"
+        autoremove: yes
+        state: present
+      loop:
+        - acl
+        - build-essential
+        - curl
+        - git
+        - htop
+        - locales
+        - lynx
+        - tree
+        - ufw
+        - vim
+
+-
+  name: Setup UFW (Uncomplicated Firewall)
+  block:
+    -
+      name: UFW - Allow SSH connections
+      ufw:
+        rule: allow
+        name: OpenSSH
+
+    -
+      name: UFW - Deny all other incoming traffic by default
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming

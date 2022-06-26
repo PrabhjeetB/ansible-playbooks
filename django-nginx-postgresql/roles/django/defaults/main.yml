@@ -1,0 +1,25 @@
+---
+# defaults file for django
+
+virtual_environment_name: "env"
+# The `user_information` variable is set during the execution of the `base` role
+virtual_environment_location: "{{ user_information.home }}/.local/share/virtualenvs/{{ virtual_environment_name }}"
+
+python_interpreter: "python3.8"
+
+gitlab_deploy_token_id: ""
+
+gitlab_deploy_token: ""
+
+git_repository_url: ""
+git_repository_destination: "{{ user_information.home }}/"
+
+python_requirements_file_location: "{{ git_repository_destination }}/requirements.txt"
+
+systemd_unit_file_directory: "/etc/systemd/system/"
+
+django_secret_key:
+
+django_settings_module: "app.settings.production"
+
+sentry_dsn:

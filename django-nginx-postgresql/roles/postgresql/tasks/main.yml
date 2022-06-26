@@ -1,0 +1,6 @@
+---
+# tasks file for postgresql
+
+-
+  name: Include tasks to to install PostgreSQL on Bionic
+  import_tasks: bionic.yml

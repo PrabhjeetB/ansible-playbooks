@@ -1,0 +1,100 @@
+---
+# Tasks to install PostgreSQL on Bionic Beaver
+
+-
+  name: Add the PostgreSQL repository key to the APT trusted keys
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+-
+  name: Add PostgreSQL repository into sources list using given filename
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ focal-pgdg main
+    state: present
+    filename: pgdg
+
+-
+  name: Ensure locale is available
+  locale_gen:
+    name: en_US.UTF-8
+    state: present
+
+-
+  name: Install PostgreSQL
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - postgresql
+    - postgresql-contrib
+    - python3-psycopg2
+  tags: packages
+
+-
+  name: Start service postgresql, if not started
+  service:
+    name: postgresql
+    state: started
+
+-
+  name: Configure service postgresql to start at boot time
+  service:
+    name: postgresql
+    enabled: yes
+
+-
+  name: Create a new PostgreSQL database with given parameters
+  become: yes
+  become_user: "postgres"
+  postgresql_db:
+    name: "{{ postgresql_db_name }}"
+    conn_limit: "100"
+    encoding: UTF-8
+    state: present
+
+-
+  name: Connect to the database created previously, create new user, and grant all privileges on database to the newly created user
+  become_user: "postgres"
+  postgresql_user:
+    db: "{{ postgresql_db_name }}"
+    name: "{{ postgresql_user_name }}"
+    password: "{{ postgresql_user_password }}"
+    encrypted: yes
+    priv: "ALL"
+    state: present
+
+-
+  name: Ensure the newly created user does not have unnecessary privileges
+  become_user: "postgres"
+  postgresql_user:
+    name: "{{ postgresql_user_name }}"
+    role_attr_flags: NOSUPERUSER,NOCREATEDB
+    state: present
+
+-
+  name: Ensure the server listen for all IPv4 addresses
+  lineinfile:
+    path: "{{ postgresql_configuration_file }}"
+    regexp: "^#listen_addresses"
+    line: "listen_addresses = '0.0.0.0'     # what IP address(es) to listen on;"
+    state: present
+  notify: restart PostgreSQL
+
+-
+  name: Copy PostgreSQL client authentication configuration file into place
+  template:
+    src: "pg_hba.conf.j2"
+    dest: "{{ postgresql_client_authentication_configuration_file }}"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: restart PostgreSQL
+
+-
+  name: Setup UFW (Uncomplicated Firewall) to allow for PostgreSQL remote access
+  ufw:
+    rule: allow
+    port: "5432"
+    proto: tcp

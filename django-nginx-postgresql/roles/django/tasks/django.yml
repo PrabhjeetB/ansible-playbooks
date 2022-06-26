@@ -1,0 +1,99 @@
+---
+# Clone the project repo, setup Gunicorn service, etc.
+
+-
+  name: Install PostgreSQL header files
+  apt:
+    name: libpq-dev
+    state: present
+
+-
+ name: Clone the Git repository from GitLab
+ git:
+   repo: "{{ git_repository_url }}"
+   dest: "{{ git_repository_destination }}"
+   accept_hostkey: yes
+   force: yes
+ become: yes
+
+-
+  name: Install specified Python requirements in indicated virtual environment directory
+  pip:
+    requirements: "{{ python_requirements_file_location }}"
+    virtualenv: "{{ virtual_environment_location }}"
+
+-
+  name: Change ownership of the cloned git repository & Python virtual environment directory
+  file:
+    path: "{{ item }}"
+    owner: "{{ application_user }}"
+    group: "{{ application_group }}"
+    state: directory
+    recurse: yes
+  loop:
+    - "{{ git_repository_destination }}"
+    - "{{ virtual_environment_location }}"
+
+-
+  name: Environment variables
+  block:
+    -
+      name: Ensure the path to the variables file exists
+      file:
+        path: "{{ git_repository_destination }}/app/.envs/.production"
+        state: directory
+        mode: "0755"
+
+    -
+      name: Copy the templates
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ git_repository_destination }}/app/.envs/.production/{{ item.dest }}"
+        owner: "{{ application_user }}"
+        group: "{{ application_group }}"
+        mode: "0755"
+      loop:
+        -
+          src: "django.j2"
+          dest: ".django"
+        -
+          src: "postgres.j2"
+          dest: ".postgres"
+
+-
+ name: Collect static files in a single location
+ django_manage:
+   command: collectstatic
+   app_path: "{{ git_repository_destination }}/app"
+   virtualenv: "{{ virtual_environment_location }}"
+ environment:
+   DJANGO_SETTINGS_MODULE: "{{ django_settings_module }}"
+
+-
+  name: Gunicorn setup
+  block:
+    -
+      name: Copy the Gunicorn service systemd unit file
+      template:
+        src: "gunicorn.service.j2"
+        dest: "{{ systemd_unit_file_directory }}/gunicorn.service"
+        owner: root
+        group: root
+        mode: "0644"
+
+    -
+      name: Copy the Gunicorn socket systemd unit file
+      template:
+        src: "gunicorn.socket.j2"
+        dest: "{{ systemd_unit_file_directory }}/gunicorn.socket"
+        owner: root
+        group: root
+        mode: "0644"
+
+    -
+      name: Ensure Gunicorn service is started and enabled at boot
+      service:
+        name: gunicorn
+        state: started
+        enabled: yes
+

@@ -1,0 +1,11 @@
+---
+
+application_user: ""
+application_group: ""
+
+web_server_domain_name: ""
+
+postgresql_host: ""
+postgresql_db_name: ""
+postgresql_user_name: ""
+postgresql_user_password: ""

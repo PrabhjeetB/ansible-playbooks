@@ -1,0 +1,56 @@
+---
+# tasks file for nginx
+
+-
+  name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+  tags: packages
+
+-
+  name: Copy the Nginx configuration file
+  template:
+    src: codex.conf.j2
+    dest: /etc/nginx/sites-available/app.conf
+    backup: yes
+  notify: reload nginx service
+
+-
+  name: Ensure that the default site is disabled
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: reload nginx service
+
+-
+  name: Ensure that the application site is enabled
+  file:
+    src: /etc/nginx/sites-available/app.conf
+    dest: /etc/nginx/sites-enabled/app.conf
+    state: link
+  notify: reload nginx service
+
+-
+  name: Ensure nginx service is started
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+-
+  name: Setup UFW (Uncomplicated Firewall) to allow all incoming HTTP and HTTPS
+  block:
+    -
+      name: Allow HTTP traffic
+      ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    -
+      name: Allow HTTPS traffic
+      ufw:
+        rule: allow
+        port: "443"
+        proto: tcp

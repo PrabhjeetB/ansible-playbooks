@@ -1,0 +1,5 @@
+---
+# defaults file for postgresql
+
+postgresql_configuration_file: "/etc/postgresql/13/main/postgresql.conf"
+postgresql_client_authentication_configuration_file: "/etc/postgresql/13/main/pg_hba.conf"

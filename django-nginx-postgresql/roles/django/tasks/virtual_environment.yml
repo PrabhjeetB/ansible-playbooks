@@ -1,0 +1,30 @@
+---
+# Set up Python virtual environment for the Django project
+
+-
+  name: Add deadsnakes apt repository for new Python versions
+  apt_repository:
+    repo: ppa:deadsnakes/ppa
+    state: present
+
+-
+  name: Update repositories cache
+  apt:
+    update_cache: yes
+
+-
+  name: All hail the walrus operator :=
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3.8
+    - python3.8-dev
+    - python3.8-venv
+
+-
+  name: Create a virtual environment using a custom Python version
+  command: "{{ python_interpreter }} -m venv {{ virtual_environment_location }}"
+  args:
+    creates: "{{ virtual_environment_location }}"
+  register: virtual_environment
